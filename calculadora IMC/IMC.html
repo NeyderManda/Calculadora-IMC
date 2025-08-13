@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Infografía IMC + Regresión Lineal – OneCompiler</title>
+<style>
+  :root{
+    --bg:#0b1224; --card:#0f172a; --muted:#9aa4b2; --text:#e5e7eb;
+    --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --info:#3b82f6; --border:#1f2937;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial; background:linear-gradient(180deg,#0b1224,#0d1430); color:var(--text)}
+  .wrap{max-width:1200px; margin:auto; padding:24px}
+  h1{font-size:clamp(24px,3vw,32px); margin:0 0 6px 0}
+  p.sub{color:var(--muted); margin:.25rem 0 1rem}
+  .grid{display:grid; gap:16px; grid-template-columns:1fr}
+  @media(min-width:980px){ .grid{grid-template-columns: 1.1fr .9fr} }
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.00)); border:1px solid var(--border); border-radius:16px; padding:18px; box-shadow:0 10px 30px rgba(0,0,0,.15); backdrop-filter: blur(6px)}
+  label{display:block; font-weight:700; margin:6px 0}
+  .row{display:grid; grid-template-columns:repeat(4,1fr); gap:12px}
+  .field{display:flex; align-items:center; gap:10px; background:#0b1020; border:1px solid var(--border); padding:12px 14px; border-radius:12px}
+  .field input{all:unset; width:100%; color:var(--text)}
+  .actions{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+  .btn{padding:12px 16px; border-radius:12px; border:1px solid var(--border); cursor:pointer; font-weight:800}
+  .btn.primary{background:linear-gradient(90deg,#2563eb,#22c55e); border:none}
+  .btn.secondary{background:#0b1020}
+
+  .infogrid{display:grid; gap:12px; grid-template-columns: repeat(12, 1fr)}
+  .tile{background:#0b1020; border:1px solid var(--border); border-radius:14px; padding:14px}
+  .tile h3{margin:0 0 6px 0; color:var(--muted); font-size:14px}
+  .value{font-size:28px; font-weight:900}
+  .badge{display:inline-block; padding:6px 10px; border-radius:999px; font-weight:800; font-size:12px}
+  .b-blue{background:rgba(59,130,246,.2); color:#cfe1ff}
+  .b-green{background:rgba(34,197,94,.2); color:#b6f3cd}
+  .b-orange{background:rgba(245,158,11,.2); color:#fde7b0}
+  .b-red{background:rgba(239,68,68,.2); color:#fecaca}
+
+  .bar{height:16px; border-radius:999px; background:#0b1020; border:1px solid var(--border); position:relative; overflow:hidden}
+  .seg{position:absolute; top:0; bottom:0}
+  .seg.under{left:0; width:18.5%; background:linear-gradient(90deg,#06b6d4,#22d3ee)}
+  .seg.normal{left:18.5%; width:calc(24.9% - 18.5%); background:linear-gradient(90deg,#22c55e,#84cc16)}
+  .seg.over{left:24.9%; width:calc(29.9% - 24.9%); background:linear-gradient(90deg,#f59e0b,#fbbf24)}
+  .seg.obese{left:29.9%; width:70.1%; background:linear-gradient(90deg,#ef4444,#f43f5e)}
+  .needle{position:absolute; top:-5px; width:2px; height:26px; background:#fff; box-shadow:0 0 0 2px rgba(255,255,255,.12); border-radius:2px}
+  .scale{display:flex; justify-content:space-between; color:var(--muted); font-size:12px; margin-top:6px}
+
+  table{width:100%; border-collapse:collapse; font-size:14px}
+  th,td{padding:10px 12px; border-bottom:1px solid var(--border)}
+  th{text-align:left; color:var(--muted)}
+  tr.highlight{outline:2px solid rgba(255,255,255,.1); border-radius:8px}
+
+  .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:13px; line-height:1.5}
+  .step{border-left:4px solid #2563eb; background:#0b1020; border:1px solid var(--border); padding:12px 14px; border-radius:12px; margin-bottom:10px}
+  code.block{display:block; white-space:pre; overflow:auto; padding:8px; background:#0a0f1e; border:1px solid var(--border); border-radius:10px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Infografía IMC + Regresión Lineal (paso a paso)</h1>
+    <p class="sub">Genera datos aleatorios, ajusta un modelo lineal IMC = b0 + b1·Altura + b2·Edad y explica cada paso de la predicción.</p>
+
+    <div class="grid">
+      <!-- PANEL IZQUIERDO: FORM + INFOGRAFÍA PRINCIPAL -->
+      <section class="card">
+        <h2 style="margin:0 0 8px 0">1) Configurar y ejecutar</h2>
+        <div class="row">
+          <div>
+            <label for="height">Altura (m)</label>
+            <div class="field"><input id="height" type="number" step="0.01" min="1.4" max="2.1" value="1.67"></div>
+          </div>
+          <div>
+            <label for="age">Edad (años)</label>
+            <div class="field"><input id="age" type="number" step="1" min="18" max="80" value="30"></div>
+          </div>
+          <div>
+            <label for="npts">N° datos simulados</label>
+            <div class="field"><input id="npts" type="number" step="1" min="20" max="200" value="60"></div>
+          </div>
+          <div>
+            <label for="seed">Semilla (opcional)</label>
+            <div class="field"><input id="seed" type="number" step="1" placeholder="Ej: 42"></div>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="run" class="btn primary">Generar datos + Ajustar modelo</button>
+          <button id="randomInputs" class="btn secondary" type="button">Altura/Edad aleatorias</button>
+        </div>
+
+        <h2 style="margin:14px 0 10px">2) Infografía de resultados</h2>
+        <div class="infogrid">
+          <div class="tile" style="grid-column: span 4">
+            <h3>IMC (predicho)</h3>
+            <div class="value" id="imcPred">—</div>
+            <div id="imcBadge">—</div>
+          </div>
+          <div class="tile" style="grid-column: span 4">
+            <h3>Coeficientes β</h3>
+            <div class="mono">
+              b0 (intercepto): <span id="b0">—</span><br>
+              b1 (Altura): <span id="b1">—</span><br>
+              b2 (Edad): <span id="b2">—</span>
+            </div>
+          </div>
+          <div class="tile" style="grid-column: span 4">
+            <h3>Métrica del modelo</h3>
+            <div class="mono">R²: <span id="r2">—</span></div>
+          </div>
+
+          <div class="tile" style="grid-column: span 12">
+            <h3>Rangos IMC y puntero</h3>
+            <div class="bar" id="bar">
+              <div class="seg under" title="<18.5 Bajo peso"></div>
+              <div class="seg normal" title="18.5–24.9 Saludable"></div>
+              <div class="seg over" title="25.0–29.9 Sobrepeso"></div>
+              <div class="seg obese" title=">=30 Obesidad"></div>
+              <div class="needle" id="needle" style="left:0%"></div>
+            </div>
+            <div class="scale"><span>0</span><span>18.5</span><span>24.9</span><span>29.9</span><span>40+</span></div>
+          </div>
+
+          <div class="tile" style="grid-column: span 12">
+            <h3>Explicación paso a paso de la regresión lineal</h3>
+            <div id="steps" class="mono"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PANEL DERECHO: TABLAS DE APOYO -->
+      <aside class="card">
+        <h2 style="margin:0 0 8px 0">Tablas y muestra de datos</h2>
+        <div class="step">
+          <strong>Tabla de referencia del IMC</strong>
+          <table style="margin-top:8px">
+            <thead><tr><th>IMC</th><th>Nivel de peso</th></tr></thead>
+            <tbody id="bmiTable">
+              <tr data-key="under"><td>Por debajo de 18.5</td><td><span class="badge b-blue">Bajo peso</span></td></tr>
+              <tr data-key="normal"><td>18.5 — 24.9</td><td><span class="badge b-green">Peso saludable</span></td></tr>
+              <tr data-key="over"><td>25.0 — 29.9</td><td><span class="badge b-orange">Sobrepeso</span></td></tr>
+              <tr data-key="obese"><td>30.0 o más</td><td><span class="badge b-red">Obesidad</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="step">
+          <strong>Muestra de datos (primeras filas)</strong>
+          <div id="dataSample" class="mono"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+<script>
+  const $ = (s)=>document.querySelector(s);
+
+  function rand(seed){
+    // LCG simple para reproducibilidad opcional
+    let m = 2**31-1, a = 48271, c = 0;
+    let state = seed ? (seed % m) : Math.floor(Math.random()*m);
+    return ()=>{ state = (a*state + c) % m; return state/m; };
+  }
+
+  function generateData(n=60, seedVal){
+    const R = seedVal ? rand(seedVal) : Math.random;
+    const data = [];
+    for(let i=0;i<n;i++){
+      const altura = 1.50 + (R()*0.4);   // 1.50–1.90 m
+      const edad   = 18 + Math.floor(R()*42); // 18–60 años
+      // peso simulado con relación y ruido
+      const peso = 50 + (altura*20) + (edad*0.30) + ((R()*4)-2);
+      const imc = peso/(altura*altura);
+      data.push({altura, edad, peso, imc});
+    }
+    return data;
+  }
+
+  // utilidades matriciales
+  function transpose(M){ return M[0].map((_,i)=>M.map(r=>r[i])); }
+  function multiply(A,B){
+    const res = Array(A.length).fill(0).map(()=>Array(B[0].length).fill(0));
+    for(let i=0;i<A.length;i++){
+      for(let k=0;k<B.length;k++){
+        const aik = A[i][k];
+        for(let j=0;j<B[0].length;j++) res[i][j] += aik*B[k][j];
+      }
+    }
+    return res;
+  }
+  function invert(M){
+    // Gauss-Jordan con pivoteo parcial
+    const n = M.length;
+    const A = M.map(r=>r.slice());
+    const I = Array(n).fill(0).map((_,i)=>{
+      const row = Array(n).fill(0); row[i]=1; return row; });
+    for(let i=0;i<n;i++){
+      // buscar pivote
+      let maxRow=i; let maxVal=Math.abs(A[i][i]);
+      for(let r=i+1;r<n;r++){ if(Math.abs(A[r][i])>maxVal){maxVal=Math.abs(A[r][i]);maxRow=r;} }
+      if(maxVal===0) throw new Error('Matriz singular');
+      // swap filas
+      if(maxRow!==i){ [A[i],A[maxRow]]=[A[maxRow],A[i]]; [I[i],I[maxRow]]=[I[maxRow],I[i]]; }
+      // normalizar fila pivote
+      const piv = A[i][i];
+      for(let j=0;j<n;j++){ A[i][j]/=piv; I[i][j]/=piv; }
+      // eliminar otras filas
+      for(let r=0;r<n;r++) if(r!==i){
+        const f = A[r][i];
+        for(let j=0;j<n;j++){ A[r][j]-=f*A[i][j]; I[r][j]-=f*I[i][j]; }
+      }
+    }
+    return I;
+  }
+
+  function round(v, d=4){ return Math.round(v*10**d)/10**d; }
+  const fmt = (num)=> (Number.isFinite(num)? (Math.abs(num)>1e6? num.toExponential(2): round(num,6)) : num);
+
+  function fitOLS(data){
+    // X = [1, altura, edad], y = imc
+    const X = data.map(d=>[1, d.altura, d.edad]);
+    const y = data.map(d=>[d.imc]);
+    const Xt = transpose(X);
+    const XtX = multiply(Xt,X);
+    const XtY = multiply(Xt,y);
+    const XtX_inv = invert(XtX);
+    const beta = multiply(XtX_inv, XtY); // [[b0],[b1],[b2]]
+    // predicciones y R2
+    const yhat = multiply(X, beta).map(r=>r[0]);
+    const yarr = y.map(r=>r[0]);
+    const meanY = yarr.reduce((a,b)=>a+b,0)/yarr.length;
+    const ssRes = yarr.reduce((s,yi,i)=> s + (yi - yhat[i])**2, 0);
+    const ssTot = yarr.reduce((s,yi)=> s + (yi - meanY)**2, 0);
+    const r2 = 1 - ssRes/ssTot;
+    return { X, y, Xt, XtX, XtY, XtX_inv, beta, yhat, r2 };
+  }
+
+  function classifyBMI(bmi){
+    if (bmi < 18.5) return {key:'under', label:'Bajo peso', badge:'b-blue'};
+    if (bmi < 25)   return {key:'normal', label:'Peso saludable', badge:'b-green'};
+    if (bmi < 30)   return {key:'over', label:'Sobrepeso', badge:'b-orange'};
+    return {key:'obese', label:'Obesidad', badge:'b-red'};
+  }
+  function updateNeedle(bmi){
+    const clamped = Math.max(0, Math.min(40, bmi));
+    const pct = (clamped / 40) * 100; $('#needle').style.left = pct + '%';
+  }
+
+  function tableSample(data, k=6){
+    const head = `altura\tedad\tpeso\timc`;
+    const rows = data.slice(0,k).map(d=>`${round(d.altura,3)}\t${d.edad}\t${round(d.peso,2)}\t${round(d.imc,2)}`).join('\n');
+    return `<code class="block">${head}\n${rows}${data.length>k?'\n…':''}</code>`;
+  }
+
+  function matrixToBlock(M, maxr=5, maxc=5){
+    const r = M.length, c = M[0].length;
+    const rr = Math.min(r, maxr), cc = Math.min(c, maxc);
+    const lines = [];
+    for(let i=0;i<rr;i++){
+      const row = [];
+      for(let j=0;j<cc;j++) row.push(String(fmt(M[i][j])).padStart(10,' '));
+      if (c>cc) row.push('   …');
+      lines.push(row.join(' '));
+    }
+    if (r>rr) lines.push('…');
+    return `<code class="block">${lines.join('\n')}</code>`;
+  }
+
+  function runAll(){
+    const h0 = parseFloat($('#height').value);
+    const a0 = parseInt($('#age').value,10);
+    const n  = parseInt($('#npts').value,10);
+    const seedVal = $('#seed').value? parseInt($('#seed').value,10): undefined;
+
+    const data = generateData(n, seedVal);
+    $('#dataSample').innerHTML = tableSample(data);
+
+    const {X,y,Xt,XtX,XtY,XtX_inv,beta,yhat,r2} = fitOLS(data);
+    const b0 = beta[0][0], b1 = beta[1][0], b2 = beta[2][0];
+
+    // predicción para (h0,a0)
+    const imcPred = b0 + b1*h0 + b2*a0;
+    const cat = classifyBMI(imcPred);
+
+    // KPIs
+    $('#imcPred').textContent = imcPred.toFixed(1);
+    $('#imcBadge').innerHTML = `<span class="badge ${cat.badge}">${cat.label}</span>`;
+    $('#b0').textContent = round(b0,6);
+    $('#b1').textContent = round(b1,6);
+    $('#b2').textContent = round(b2,6);
+    $('#r2').textContent = round(r2,4);
+    updateNeedle(imcPred);
+
+    // Paso a paso
+    const steps = [];
+    steps.push(`<div class="step"><strong>PASO 1 · Generación de datos</strong>\n<p class="mono">Se simulan ${n} personas con: Altura∈[1.50,1.90] m, Edad∈[18,60] años y Peso ≈ 50 + 20·Altura + 0.30·Edad + ruido. Luego IMC = Peso / Altura².</p>${tableSample(data)}</div>`);
+
+    steps.push(`<div class="step"><strong>PASO 2 · Construcción de matrices</strong>\n<p class="mono">Matriz de diseño X = [1, Altura, Edad] y vector objetivo y = IMC.</p>
+    <p class="mono">X (muestra):</p>${matrixToBlock(X,6,3)}
+    <p class="mono">y (muestra):</p>${matrixToBlock(y,6,1)}</div>`);
+
+    steps.push(`<div class="step"><strong>PASO 3 · Cálculos de mínimos cuadrados</strong>
+    <p class="mono">Usamos β = (XᵀX)⁻¹ Xᵀy.</p>
+    <p class="mono">XᵀX:</p>${matrixToBlock(XtX)}
+    <p class="mono">(XᵀX)⁻¹:</p>${matrixToBlock(XtX_inv)}
+    <p class="mono">Xᵀy:</p>${matrixToBlock(XtY)}</div>`);
+
+    steps.push(`<div class="step"><strong>PASO 4 · Coeficientes del modelo</strong>
+    <p class="mono">β = [b0, b1, b2]ᵀ = ${(round(b0,6))}, ${(round(b1,6))}, ${(round(b2,6))}.</p>
+    <p class="mono">Ecuación: IMĈ = b0 + b1·Altura + b2·Edad</p></div>`);
+
+    steps.push(`<div class="step"><strong>PASO 5 · Predicción</strong>
+    <p class="mono">Para Altura = ${h0} m y Edad = ${a0} años:</p>
+    <code class="block">IMĈ = ${round(b0,6)} + (${round(b1,6)}×${h0}) + (${round(b2,6)}×${a0})\n     = ${round(b0 + b1*h0 + b2*a0,6)} → ${imcPred.toFixed(1)}</code>
+    <p class="mono">Categoría: <strong>${cat.label}</strong>.</p>
+    <p class="mono">Bondad de ajuste: R² = ${round(r2,4)}.</p></div>`);
+
+    steps.push(`<div class="step"><strong>PASO 6 · Interpretación</strong>
+    <p class="mono">El modelo estima el IMC en función de Altura y Edad. Es una <em>herramienta de detección</em>, no un diagnóstico clínico. Para evaluar salud individual, consulte a un profesional.</p></div>`);
+
+    $('#steps').innerHTML = steps.join('');
+  }
+
+  $('#run').addEventListener('click', runAll);
+  $('#randomInputs').addEventListener('click', ()=>{
+    const r = Math.random;
+    $('#height').value = (1.50 + r()*0.4).toFixed(2);
+    $('#age').value = Math.floor(18 + r()*42);
+  });
+
+  // ejecución inicial
+  runAll();
+</script>
+</body>
+</html>
